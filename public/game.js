@@ -11,19 +11,35 @@ const inputLeft=document.querySelector(".left");
 const inputAhead=document.querySelector(".ahead");
 const inputAccelerate=document.querySelector(".accelerate");
 
-inputRight.addEventListener("click",()=>{
-    console.log( socket.emit("details",`client ${socket.id} turned right`));
-});
-inputLeft.addEventListener("click",()=>{
-     socket.emit("details",`client ${socket.id} turned left`);
-})
-inputAhead.addEventListener("click",()=>{
-     socket.emit("details",`client ${socket.id} moved ahead`);
-})
-inputAccelerate.addEventListener("click",()=>{
-     socket.emit(`details`,`client ${socket.id} accelerated`);
-})
+let clientInput={
+     id:socket.id,
+     action:"move",
+};
 
-socket.on("details",(arg)=>{
-     console.log(`broadcasted:`,arg);
-})
+document.addEventListener("keydown",(event)=>{
+     if(event.key==="ArrowRight"){
+     clientInput.action="turned right";
+     socket.emit("details",clientInput);
+     }
+     else if(event.key==="ArrowLeft"){
+     clientInput.action= "turned left";
+     console.log(event.key);
+     socket.emit("details",clientInput);
+     }
+     else if (event.key==="ArrowUp"){
+     clientInput.action= "moved ahead";
+     socket.emit("details",clientInput);
+     }
+     else if(event.key==="a"){
+     clientInput.action= "accelerated";
+     console.log(event.key)
+     socket.emit("details",clientInput);
+     }
+});
+
+  
+
+
+socket.on("gameUpdate",(gameWorld)=>{
+     console.log(`broadcasted:`,JSON.stringify(gameWorld));
+});
