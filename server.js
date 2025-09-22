@@ -29,23 +29,20 @@ class Client{
           };
           this.gameState={
                x:0,
-               y:0,
-               rotation:0,
-               speed:0,  
+               y:0, 
           };
              
      }
 
      gameInfo(){
           if(this.clientInfo.msg==="moved ahead"){
-               this.gameState.x++;
                this.gameState.y++;
           }
           else if(this.clientInfo.msg==="turned right"|| this.clientInfo.msg=== "turned left"){
-               this.gameState.rotation++;
+               this.gameState.x++;
           }
           else if (this.clientInfo.msg==="accelerated"){
-               this.gameState.speed++;
+               this.gameState.y+=100;
           };
           
      };
@@ -61,19 +58,26 @@ io.on("connection",(socket)=>{
      playerCounter++;
      players[socket.id]=`player${playerCounter}`;
      //console.log(`${players[socket.id]} connected`);
+     socket.emit("playerId",players);
       
      clients[socket.id]=new Client(players[socket.id]);
      gameWorld[players[socket.id]]=clients[socket.id].gameState;
      
 
      socket.on("details",(clientInput)=>{
+          
           clients[socket.id].clientInfo.msg= clientInput.action;
+          setInterval(()=>{
           clients[socket.id].gameInfo();
           console.log(gameWorld);
           io.emit("gameUpdate",gameWorld);
-          });
+     }, 60);
+          if(clientInput==="stop"){
+               clearInterval();
+          }
 
-          
+
+     });    
 
      socket.on("disconnect",()=>{
                delete clients[socket.id];
