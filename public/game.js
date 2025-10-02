@@ -4,30 +4,69 @@ console.log('connecting..')
 
 const canvas=document.querySelector(".gameBoard");
 const displayMsg=document.querySelector(".msg")
+const restart=document.querySelector(".restart");
 const ctx=canvas.getContext("2d");
 
 const Track=[
-     {x:-50, y: 0, width:150,height:100,style:"gray"},
-     {x:-50, y: 100, width:150,height:100,style:"gray"},
-     {x:-50 , y: 200, width:150,height:100,style:"gray"},
-     {x:-50 , y: 300, width:150,height:100,style:"gray"},
-     {x:-50 , y: 400, width:150,height:100,style:"gray"},
+     {x:-50, y: 0, width:300,height:100,style:"gray"},
+     {x:-50, y: 100, width:300,height:100,style:"gray"},
+     {x:-50 , y: 200, width:300,height:100,style:"gray"},
+     {x:-50 , y: 300, width:300,height:100,style:"gray"},
+     {x:-50 , y: 400, width:300,height:100,style:"gray"},
 
-     {x:100, y:400 , width:150,height:100,style:"gray"},
-     {x:250, y:400 , width:150,height:100,style:"gray"},
+     {x:250, y:400 , width:300,height:100,style:"gray"},
+     {x:550, y:400 , width:300,height:100,style:"gray"},
 
-     {x: 250, y:300 , width:150,height:100,style:"gray"},
+     {x:550, y:300 , width:300,height:100,style:"gray"},
 
-     {x: 250, y: 200, width:150,height:100,style:"gray"},
-     {x: 250, y: 100, width:150,height:100,style:"gray"},
+     {x: 550, y: 200, width:300,height:100,style:"gray"},
+     {x: 550, y: 100, width:300,height:100,style:"gray"},
 
-     {x:250, y:0 , width:150,height:100,style:"gray"},
-     {x:350, y:0 , width:125,height:100,style:"gray"},
-     {x: 475, y: 0, width:25,height:100,style:"red"},
-     {x:500, y:0,width:150,height:100,style:"gray"},
-     {x:-50, y:0 , width:150,height:100,style:"gray"},
+     {x:550, y:0 , width:300,height:100,style:"gray"},
+     {x:750, y:0, width:300,height:100,style:"gray"},
+     {x:870, y: 0, width:25,height:100,style:"red"},
+   
+     {x:-50, y:0 , width:300,height:100,style:"gray"},
+
      
 ]
+
+     function drawTree(x, y, trunkHeight=50, trunkWidth=20, canopyRadius=20) {
+    
+     ctx.fillStyle = 'sienna'; 
+     
+     const trunkX = x - (trunkWidth / 2);
+     const trunkY = y - trunkHeight; 
+     
+     ctx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+     
+     ctx.fillStyle = 'forestgreen'; 
+     
+     const canopyCenterX = x;
+     const canopyCenterY = trunkY; 
+     ctx.beginPath();
+     ctx.arc(canopyCenterX, canopyCenterY, canopyRadius, 0, Math.PI * 2);
+     ctx.fill();
+     }
+
+     trees=[
+          {x:-50,y:0},
+          {x:-50,y:100},
+          {x:-50,y:200},
+          {x:-50,y:300},
+          {x:-50,y:400},
+          {x:250,y:0},
+          {x:250,y:100},
+          {x:250,y:200},{x:250,y:300},{x:250,y:400},
+          {x:550,y:0},
+          {x:550,y:100},
+          {x:550,y:200},
+          {x:550,y:300},
+          {x:550,y:400},
+          {x:850,y:200},
+          {x:850,y:300},
+          {x:850,y:400}
+     ]
 
 socket.on("connect",()=>{
      console.log(`conected to server`,socket.id); 
@@ -71,8 +110,15 @@ document.addEventListener("keydown",(event)=>{
           canvas.style.display="none";
           displayMsg.innerText=Display;
           displayMsg.style.display="block"
+          restart.style.display="block";
 
      }
+
+     restart.addEventListener("click",()=>{
+          
+          window.location.href="./index.html"
+
+     })
 
 
      if (!myId || !gameWorld[myId]) {
@@ -87,13 +133,21 @@ document.addEventListener("keydown",(event)=>{
 
 
      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+
      
      Track.forEach(trackPiece => {
           ctx.fillStyle=trackPiece.style;
           ctx.fillRect(trackPiece.x-cameraX,trackPiece.y-cameraY,trackPiece.width,trackPiece.height)
-     
           
      });
+
+     trees.forEach(tree => {
+          drawTree(tree.x-cameraX+10,tree.y-cameraY+10);
+          
+     });
+
+
 
      const playerwidth= 40;
      const playerheight=25;
@@ -146,12 +200,11 @@ document.addEventListener("keydown",(event)=>{
                   const T_TOP    = trackPiece.y - cameraY;
                   const T_BOTTOM = T_TOP + trackPiece.height;
                   
-                  // AABB Collision Check: If NO separation on any axis, then there is a collision.
                   if (
-                      P_RIGHT > T_LEFT  &&  // Player's right is past track's left
-                      P_LEFT  < T_RIGHT &&  // Player's left is before track's right
-                      P_BOTTOM > T_TOP  &&  // Player's bottom is past track's top
-                      P_TOP   < T_BOTTOM    // Player's top is before track's bottom
+                      P_RIGHT > T_LEFT  && 
+                      P_LEFT  < T_RIGHT &&  
+                      P_BOTTOM > T_TOP  &&  
+                      P_TOP   < T_BOTTOM   
                   ) {
                       const winMsg = `${myId} won`;
                       socket.emit("msg", winMsg);
