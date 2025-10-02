@@ -116,7 +116,7 @@ io.on("connection",(socket)=>{
      clients[socket.id]=new Client(players[socket.id]);
      gameWorld[players[socket.id]]=clients[socket.id].gameState;
 
-   
+     
      
 
      socket.on("details",(clientInput)=>{
