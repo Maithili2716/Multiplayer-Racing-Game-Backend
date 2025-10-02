@@ -3,26 +3,37 @@ const socket = io();
 console.log('connecting..')
 
 const canvas=document.querySelector(".gameBoard");
+const displayMsg=document.querySelector(".msg")
 const ctx=canvas.getContext("2d");
+
+const Track=[
+     {x:-50, y: 0, width:150,height:100,style:"gray"},
+     {x:-50, y: 100, width:150,height:100,style:"gray"},
+     {x:-50 , y: 200, width:150,height:100,style:"gray"},
+     {x:-50 , y: 300, width:150,height:100,style:"gray"},
+     {x:-50 , y: 400, width:150,height:100,style:"gray"},
+
+     {x:100, y:400 , width:150,height:100,style:"gray"},
+     {x:250, y:400 , width:150,height:100,style:"gray"},
+
+     {x: 250, y:300 , width:150,height:100,style:"gray"},
+
+     {x: 250, y: 200, width:150,height:100,style:"gray"},
+     {x: 250, y: 100, width:150,height:100,style:"gray"},
+
+     {x:250, y:0 , width:150,height:100,style:"gray"},
+     {x:350, y:0 , width:125,height:100,style:"gray"},
+     {x: 475, y: 0, width:25,height:100,style:"red"},
+     {x:500, y:0,width:150,height:100,style:"gray"},
+     {x:-50, y:0 , width:150,height:100,style:"gray"},
+     
+]
 
 socket.on("connect",()=>{
      console.log(`conected to server`,socket.id); 
-     });
+});
 
-     const Track=[
-          {x:170, y:0, width:300, height:100},
-          {x:170,y:100,width:300,height:100},
-          {x:170, y:200, width:300, height:100},
-          {x:170,y:300,width:300,height:100},
-          {x:170, y:400, width:300, height:100},
-     ];
-
-     Track.forEach(trackPiece => {
-          ctx.fillStyle="black";
-          ctx.fillRect(trackPiece.x , trackPiece.y ,trackPiece.width,trackPiece.height);
-         
-          
-     });
+   
 
 document.addEventListener("keydown",(event)=>{
      if(event.key==="ArrowRight"){
@@ -34,68 +45,128 @@ document.addEventListener("keydown",(event)=>{
      else if (event.key==="ArrowUp"){
      socket.emit("details",{id:socket.id,action:"moved ahead"});
      }
-     else if(event.key==="a"){
-     socket.emit("details",{id:socket.id,action:"accelerated"});
+     else if(event.key==="ArrowDown"){
+     socket.emit("details",{id:socket.id,action:"moved behind"});
      }
 });
 
-     socket.on("playerId",(players)=>{
-           playersId=players;
 
-     });
-     let playersId={};
+
+
+     socket.on("playerId",(players)=>{
+          ids=players;
+     })
+
+     let ids={};
 
      socket.on("gameUpdate",(gameWorld)=>{
      console.log(`broadcasted:`,JSON.stringify(gameWorld));
+     let Display=gameWorld.msg;
 
-     const myId=playersId[socket.id];
+
+     const myId= ids[socket.id];
      const myData=gameWorld[myId];
-     let cameraX=myData.x - canvas.width /2;
-     let cameraY= myData.y - canvas.height/2;
 
-     let margin=10;
+     if(Display&& Display.length>0){
+          canvas.style.display="none";
+          displayMsg.innerText=Display;
+          displayMsg.style.display="block"
+
+     }
+
+
+     if (!myId || !gameWorld[myId]) {
+          return;
+      }
+
      
-     ctx.clearRect(0,0,canvas.width,canvas.height);
+     
 
-     const Track=[
-          {x:170, y:0, width:300, height:100},
-          {x:170,y:100,width:300,height:100},
-          {x:170, y:200, width:300, height:100},
-          {x:170,y:300,width:300,height:100},
-          {x:170, y:400, width:300, height:100},
-          {x:170,y:500,width:300,height:100}
-     ]
+     cameraX=myData.x- (canvas.width/2);
+     cameraY=myData.y- (canvas.height/2);
+
+
+     ctx.clearRect(0,0,canvas.width,canvas.height);
+     
      Track.forEach(trackPiece => {
-          ctx.fillStyle="black";
-          ctx.fillRect(trackPiece.x - cameraX, trackPiece.y - cameraY,trackPiece.width,trackPiece.height);
-          
+          ctx.fillStyle=trackPiece.style;
+          ctx.fillRect(trackPiece.x-cameraX,trackPiece.y-cameraY,trackPiece.width,trackPiece.height)
+     
           
      });
 
+     const playerwidth= 40;
+     const playerheight=25;
 
-  
      for (const player in gameWorld) {
-     
-          const playerData=gameWorld[player];
-          let playerX=playerData.x - cameraX;
-          let playerY=playerData.y-cameraY;
-          if(player===myId){
-               ctx.fillStyle="blue";
-               ctx.fillRect(canvas.width/2,canvas.height/2,100,80);
-               ctx.fillText(myId,canvas.width/2,canvas.height/2 - margin)
-              
-              
-          }
-          else{
-               ctx.fillStyle="red";
-               ctx.fillRect(playerX,playerY,100,80)
-               ctx.fillText(player,playerX,playerY-margin)
-              
-              
-          }
-     }
 
-});
+            const playerData=gameWorld[player];
+
+               if (playerData.msg){
+                    continue
+               }
+            
+               let screenX=0;
+               let screenY=0;
+               let Style="";
+               const margin=10;
+               let text="";
+           
+               if(player===myId){
+                   Style="blue"
+                   text=myId;
+                   screenX=canvas.width/2;
+                   screenY=canvas.height/2;
+
+               }else{
+                   Style="red"
+                   text=player;
+                   screenX=playerData.x - cameraX;
+                   screenY=playerData.y-cameraY;
+
+               }
+
+               ctx.fillStyle=Style;
+               ctx.fillRect(screenX-(playerwidth/2),screenY- (playerheight)/2,playerwidth,playerheight)
+               ctx.fillText(text,screenX,screenY-playerheight/2-margin)
+          }
+
+          const P_HALF_W = playerwidth / 2;
+          const P_HALF_H = playerheight / 2;
+          const P_LEFT   = canvas.width / 2 - P_HALF_W;
+          const P_RIGHT  = canvas.width / 2 + P_HALF_W;
+          const P_TOP    = canvas.height / 2 - P_HALF_H;
+          const P_BOTTOM = canvas.height / 2 + P_HALF_H;
+          
+          Track.forEach(trackPiece => {
+              if (trackPiece.style === "red") {
+                  
+                  const T_LEFT   = trackPiece.x - cameraX;
+                  const T_RIGHT  = T_LEFT + trackPiece.width;
+                  const T_TOP    = trackPiece.y - cameraY;
+                  const T_BOTTOM = T_TOP + trackPiece.height;
+                  
+                  // AABB Collision Check: If NO separation on any axis, then there is a collision.
+                  if (
+                      P_RIGHT > T_LEFT  &&  // Player's right is past track's left
+                      P_LEFT  < T_RIGHT &&  // Player's left is before track's right
+                      P_BOTTOM > T_TOP  &&  // Player's bottom is past track's top
+                      P_TOP   < T_BOTTOM    // Player's top is before track's bottom
+                  ) {
+                      const winMsg = `${myId} won`;
+                      socket.emit("msg", winMsg);
+                  }
+              }
+          });
+          
+     
+}
+); 
+
+
+
+
+
 
 
 
